@@ -1,0 +1,25 @@
+{
+  "name": "Kin Care - Senior Home & Medical Care",
+  "short_name": "Kin Care",
+  "description": "Senior citizen home healthcare and assistance platform offering verified nurses, bedside attendants, diagnostics, medicine delivery, and 24x7 emergency care.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#042f2e",
+  "theme_color": "#0d9488",
+  "categories": ["medical", "health", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

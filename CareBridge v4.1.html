@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareBridge | Proxy-Care Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <!-- Inter Font & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; overflow-x: hidden; }
+        :root { --font-scale: 1; }
+        .view-section { display: none; opacity: 0; transition: opacity 0.35s ease-in-out; }
+        .view-section.active { display: flex; flex-direction: column; opacity: 1; }
+        .sos-pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 25px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-[#070708] dark:text-white min-h-screen flex flex-col">
+
+    <!-- Global Navigation -->
+    <nav class="w-full z-50 sticky top-0 backdrop-blur-xl bg-white/80 dark:bg-black/80 border-b border-gray-200 dark:border-white/10 shrink-0 h-16 flex items-center justify-between px-4 md:px-8">
+        <div class="flex items-center gap-2 md:gap-3 cursor-pointer select-none" onclick="logout()">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
+                <i class="fa-solid fa-heart-pulse text-white text-sm"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-lg font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">CareBridge</span>
+                <span class="text-[9px] tracking-widest uppercase font-semibold text-gray-500" id="nav-role-badge">Proxy-Care</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-3">
+            <button onclick="toggleTheme()" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center transition">
+                <i id="theme-icon" class="fa-solid fa-sun text-amber-500 text-sm"></i>
+            </button>
+            <button id="nav-btn" onclick="switchView('auth')" class="px-4 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black font-bold text-xs shadow-sm">
+                Sign In
+            </button>
+        </div>
+    </nav>
+
+    <!-- 1. Landing View -->
+    <main id="landing" class="view-section active w-full relative items-center pb-20">
+        <div class="w-full max-w-2xl mx-auto text-center z-10 pt-20 pb-16 px-4">
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight leading-tight mb-6">A reliable stand-in child for your aging parents.</h1>
+            <p class="text-sm md:text-base text-gray-600 dark:text-gray-400 mb-8 max-w-lg mx-auto font-medium">Connect with vetted local proxies for hospital treatments, groceries, and daily needs.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="openAuth('family')" class="px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-sm shadow-lg">Family Portal</button>
+                <button onclick="openAuth('elder')" class="px-8 py-3.5 rounded-xl bg-purple-600 text-white font-bold text-sm shadow-lg">Elder/Parent Portal</button>
+                <button onclick="openAuth('proxy')" class="px-8 py-3.5 rounded-xl bg-green-600 text-white font-bold text-sm shadow-lg">Care Proxy Portal</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 2. Auth View -->
+    <main id="auth" class="view-section w-full items-center pt-20 px-4 pb-20">
+        <div class="w-full max-w-[400px] bg-white dark:bg-[#111113] border border-gray-200/80 dark:border-white/10 rounded-3xl p-6 shadow-2xl relative z-10">
+            <div class="text-center mb-4">
+                <h2 id="auth-heading" class="text-xl font-black">Sign In / Register</h2>
+                <p id="auth-subheading" class="text-[11px] text-gray-500 mt-1">Authenticate via Magic Link OTP</p>
+                <p id="auth-error" class="text-[10px] font-bold text-red-500 mt-2 hidden"></p>
+            </div>
+            
+            <form onsubmit="handleSupabaseAuth(event)" class="space-y-3">
+                <input id="auth-email" type="email" required placeholder="Email Address" class="w-full px-3 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 focus:border-cyan-500 outline-none">
+                <button type="submit" id="auth-submit-btn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-xs mt-1">
+                    Send OTP Magic Link
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- 3. Family Dashboard -->
+    <main id="family-ui" class="view-section flex-col w-full px-4 py-6 md:p-8">
+        <div class="max-w-7xl mx-auto w-full flex flex-col gap-6">
+            <h1 class="text-2xl md:text-3xl font-black">Family Command Center</h1>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 flex flex-col gap-4">
+                    <h3 class="text-sm font-bold"><i class="fa-solid fa-plus-circle text-blue-500"></i> Request Care Services</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-5 rounded-3xl bg-white dark:bg-[#111113] border border-gray-200 shadow-sm">
+                            <h4 class="text-xs font-bold text-purple-600 mb-3 uppercase">Health & Medical</h4>
+                            <button onclick="openBookingModal('Doctor Appointment')" class="w-full text-left p-3 rounded-xl border border-gray-200 text-xs font-medium">Doctor Appointment</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <h3 class="text-sm font-bold"><i class="fa-solid fa-satellite-dish text-cyan-500"></i> Active Task Monitoring</h3>
+                    <div class="p-5 rounded-3xl bg-white dark:bg-[#111113] border border-gray-200 shadow-sm" id="family-active-tasks">
+                        <p class="text-xs text-gray-500">Awaiting Realtime Sync...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 4. Proxy (Helper) Dashboard -->
+    <main id="proxy-ui" class="view-section flex-col w-full px-4 py-6 md:p-8">
+        <div class="max-w-7xl mx-auto w-full flex flex-col gap-6">
+            <h1 class="text-2xl md:text-3xl font-black">Proxy Command Center</h1>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Available Tasks -->
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#111113] border border-gray-200 shadow-sm">
+                    <h3 class="text-sm font-bold text-gray-500 mb-4">Available Assigned Requests</h3>
+                    <div id="proxy-available-tasks" class="space-y-4">
+                        <!-- Populated by Supabase -->
+                    </div>
+                </div>
+
+                <!-- Active Task Execution -->
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#111113] border border-cyan-500 shadow-sm">
+                    <h3 class="text-xs font-bold text-cyan-600 uppercase mb-2">In Progress</h3>
+                    <h4 class="font-black text-xl mb-4" id="proxy-active-title">No Active Task</h4>
+                    <div class="flex flex-col gap-3">
+                        <button onclick="updateTaskStatus('On_the_way')" class="py-3 rounded-xl bg-blue-600 text-white font-bold text-sm">On the Way</button>
+                        <button onclick="updateTaskStatus('Arrived')" class="py-3 rounded-xl bg-cyan-600 text-white font-bold text-sm">Arrived</button>
+                        <button onclick="updateTaskStatus('In_progress')" class="py-3 rounded-xl bg-amber-600 text-white font-bold text-sm">Start Task</button>
+                        <button onclick="updateTaskStatus('Completed')" class="py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm">Complete Task</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 5. Elder Dashboard -->
+    <main id="elder-ui" class="view-section flex-col w-full px-4 py-6 md:p-8 bg-slate-100 dark:bg-black">
+        <div class="max-w-4xl mx-auto w-full flex flex-col gap-6">
+            <h1 class="text-3xl md:text-4xl font-black">Elder Dashboard</h1>
+            
+            <!-- Pending Approvals Section -->
+            <div class="p-6 rounded-3xl border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/10 shadow-md hidden" id="elder-approvals-section">
+                <h3 class="font-black text-xl mb-4 text-amber-700 dark:text-amber-400">Pending Family Requests</h3>
+                <div id="elder-pending-list" class="space-y-3">
+                    <!-- Populated by Supabase -->
+                </div>
+            </div>
+
+            <!-- Standard Actions -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border-2 border-purple-100 shadow-md">
+                    <h3 class="font-black text-xl mb-2">Health & Medical</h3>
+                    <button class="w-full py-4 rounded-2xl bg-purple-100 text-purple-700 font-bold">Open Medical</button>
+                </div>
+                
+                <button onclick="triggerSOS()" class="sm:col-span-2 w-full py-8 rounded-3xl bg-red-600 text-white font-black shadow-xl sos-pulse">
+                    <span class="text-4xl">EMERGENCY SOS</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Booking Modal with File Upload -->
+    <div id="booking-modal" class="fixed inset-0 z-[100] modal-overlay hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-[#111113] rounded-3xl p-6 shadow-2xl">
+            <h3 class="font-black text-lg mb-4" id="modal-title">Book Service</h3>
+            <div class="space-y-4">
+                <textarea id="book-notes" rows="3" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none" placeholder="Enter details..."></textarea>
+                
+                <label class="block text-xs font-bold text-gray-500 uppercase">Prescription / Document Upload</label>
+                <input type="file" id="book-file" class="w-full text-xs" accept="image/*,.pdf">
+
+                <div class="flex gap-2 mt-4">
+                    <button onclick="closeBookingModal()" class="flex-1 py-3 bg-gray-200 rounded-xl font-bold">Cancel</button>
+                    <button onclick="submitSupabaseBooking()" class="flex-1 py-3 bg-cyan-600 text-white rounded-xl font-bold">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Modal -->
+    <div id="rating-modal" class="fixed inset-0 z-[100] modal-overlay hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-[#111113] rounded-3xl p-6 shadow-2xl text-center">
+            <h3 class="font-black text-lg mb-2">Rate Your Proxy</h3>
+            <p class="text-sm text-gray-500 mb-4">How was your experience?</p>
+            <select id="task-rating" class="w-full p-3 mb-4 rounded-xl border border-gray-200">
+                <option value="5">5 - Excellent</option>
+                <option value="4">4 - Good</option>
+                <option value="3">3 - Average</option>
+                <option value="2">2 - Poor</option>
+                <option value="1">1 - Terrible</option>
+            </select>
+            <button onclick="submitRating()" class="w-full py-3 bg-amber-500 text-white rounded-xl font-bold">Submit Rating</button>
+        </div>
+    </div>
+
+    <script>
+        // --- SUPABASE INITIALIZATION ---
+        // Requires Vercel Environment Variables in a real deployment
+        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+        
+        // Initialize official client
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let currentUserSession = null;
+        let currentUserProfile = null;
+        let currentActiveTaskId = null;
+
+        window.onload = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUserSession = session;
+                await loadUserProfile();
+            }
+        };
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        function openAuth(rolePref) {
+            switchView('auth');
+            // Role assignment would ideally happen via invite links or separate registration flows
+            localStorage.setItem('tempRolePref', rolePref); 
+        }
+
+        // --- AUTH & ROLES ---
+        async function handleSupabaseAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            
+            // Supabase Auth (Email OTP)
+            let { data, error } = await supabase.auth.signInWithOtp({
+                email: email,
+                options: { shouldCreateUser: false } 
+            });
+
+            if (error) {
+                document.getElementById('auth-error').innerText = "Login failed: " + error.message;
+                document.getElementById('auth-error').classList.remove('hidden');
+            } else {
+                alert("Magic link sent to " + email);
+            }
+        }
+
+        async function loadUserProfile() {
+            const user = currentUserSession.user;
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', user.id);
+            
+            if (profile && profile.length > 0) {
+                currentUserProfile = profile[0];
+                setupRealtimeSubscriptions();
+                
+                if (currentUserProfile.role === 'family') {
+                    switchView('family-ui');
+                    fetchFamilyTasks();
+                } else if (currentUserProfile.role === 'elder') {
+                    switchView('elder-ui');
+                    fetchElderApprovals();
+                } else if (currentUserProfile.role === 'proxy') {
+                    switchView('proxy-ui');
+                    fetchProxyTasks();
+                }
+            }
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            currentUserSession = null;
+            currentUserProfile = null;
+            switchView('landing');
+        }
+
+        // --- REALTIME SUBSCRIPTIONS ---
+        function setupRealtimeSubscriptions() {
+            const channel = supabase
+                .channel('public:tasks')
+                .on('postgres_changes', { event: '*', table: 'tasks', schema: 'public' }, payload => {
+                    console.log('Realtime DB Change:', payload);
+                    // Refresh UIs dynamically based on role
+                    if (currentUserProfile.role === 'family') fetchFamilyTasks();
+                    if (currentUserProfile.role === 'elder') fetchElderApprovals();
+                    if (currentUserProfile.role === 'proxy') fetchProxyTasks();
+                })
+                .subscribe();
+        }
+
+        // --- FAMILY FLOW: BOOKING & STORAGE UPLOAD ---
+        function openBookingModal(serviceName) {
+            document.getElementById('modal-title').innerText = `Book: ${serviceName}`;
+            document.getElementById('booking-modal').classList.remove('hidden');
+        }
+        function closeBookingModal() {
+            document.getElementById('booking-modal').classList.add('hidden');
+        }
+
+        async function submitSupabaseBooking() {
+            const notes = document.getElementById('book-notes').value;
+            const fileInput = document.getElementById('book-file').files[0];
+            const service = document.getElementById('modal-title').innerText.replace('Book: ', '');
+            
+            let fileUrl = null;
+            if (fileInput) {
+                const fileExt = fileInput.name.split('.').pop();
+                const filePath = `prescriptions/${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage.from('prescriptions').upload(filePath, fileInput);
+                
+                if (!uploadError) {
+                    fileUrl = supabase.storage.from('prescriptions').getPublicUrl(filePath).data.publicUrl;
+                }
+            }
+
+            const { error } = await supabase.from('tasks').insert({
+                family_id: currentUserSession.user.id,
+                service: service,
+                details: notes,
+                prescription_url: fileUrl,
+                status: 'Pending Approval' // Sent to Elder first
+            });
+
+            if (!error) {
+                alert('Request sent to Elder for approval.');
+                closeBookingModal();
+                fetchFamilyTasks();
+            }
+        }
+
+        async function fetchFamilyTasks() {
+            const { data } = await supabase.from('tasks').select('*').eq('family_id', currentUserSession.user.id);
+            const container = document.getElementById('family-active-tasks');
+            
+            if(data && data.length > 0) {
+                container.innerHTML = data.map(t => `
+                    <div class="mb-3 p-3 border rounded-xl flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-sm">${t.service}</p>
+                            <p class="text-xs text-gray-500">Status: <span class="font-bold text-cyan-500">${t.status}</span></p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // --- ELDER FLOW: APPROVALS & RATINGS ---
+        async function fetchElderApprovals() {
+            const { data } = await supabase.from('tasks')
+                .select('*')
+                .eq('status', 'Pending Approval'); // Simplified RLS assumption for prototype
+            
+            const section = document.getElementById('elder-approvals-section');
+            const list = document.getElementById('elder-pending-list');
+            
+            if(data && data.length > 0) {
+                section.classList.remove('hidden');
+                list.innerHTML = data.map(t => `
+                    <div class="p-4 bg-white dark:bg-black rounded-xl border border-amber-200">
+                        <p class="font-bold">${t.service}</p>
+                        <p class="text-xs mb-3 text-gray-500">${t.details}</p>
+                        <div class="flex gap-2">
+                            <button onclick="handleElderApproval('${t.id}', 'Approved')" class="flex-1 py-2 bg-green-500 text-white rounded-lg text-sm font-bold">Approve</button>
+                            <button onclick="handleElderApproval('${t.id}', 'Declined')" class="flex-1 py-2 bg-red-500 text-white rounded-lg text-sm font-bold">Decline</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
+        async function handleElderApproval(taskId, newStatus) {
+            await supabase.from('tasks').update({ status: newStatus }).eq('id', taskId);
+        }
+
+        async function triggerSOS() {
+            await supabase.from('alerts').insert({
+                user_id: currentUserSession.user.id,
+                message: 'EMERGENCY SOS TRIGGERED'
+            });
+            alert('Emergency Alert Dispatched via DB Realtime.');
+        }
+
+        function openRatingModal(taskId) {
+            currentActiveTaskId = taskId;
+            document.getElementById('rating-modal').classList.remove('hidden');
+        }
+
+        async function submitRating() {
+            const ratingVal = document.getElementById('task-rating').value;
+            await supabase.from('ratings').insert({
+                task_id: currentActiveTaskId,
+                rating: parseInt(ratingVal)
+            });
+            document.getElementById('rating-modal').classList.add('hidden');
+            alert('Feedback submitted!');
+        }
+
+        // --- PROXY FLOW: ACCEPTANCE & STATUS ---
+        async function fetchProxyTasks() {
+            // Fetch tasks approved by Elder and waiting for a Proxy
+            const { data: available } = await supabase.from('tasks').select('*').eq('status', 'Approved');
+            const list = document.getElementById('proxy-available-tasks');
+            
+            if(available && available.length > 0) {
+                list.innerHTML = available.map(t => `
+                    <div class="p-4 bg-slate-50 dark:bg-black rounded-xl border border-gray-200">
+                        <p class="font-bold">${t.service}</p>
+                        <button onclick="acceptProxyTask('${t.id}')" class="mt-2 w-full py-2 bg-green-600 text-white rounded-lg font-bold text-sm">Accept Task</button>
+                    </div>
+                `).join('');
+            }
+
+            // Check if proxy has an active task
+            const { data: active } = await supabase.from('tasks').select('*').eq('proxy_id', currentUserSession.user.id).neq('status', 'Completed');
+            if(active && active.length > 0) {
+                currentActiveTaskId = active[0].id;
+                document.getElementById('proxy-active-title').innerText = active[0].service;
+            }
+        }
+
+        async function acceptProxyTask(taskId) {
+            await supabase.from('tasks').update({ 
+                proxy_id: currentUserSession.user.id,
+                status: 'Accepted'
+            }).eq('id', taskId);
+            
+            currentActiveTaskId = taskId;
+        }
+
+        async function updateTaskStatus(newStatus) {
+            if(!currentActiveTaskId) return alert("No active task.");
+            await supabase.from('tasks').update({ status: newStatus }).eq('id', currentActiveTaskId);
+            
+            if(newStatus === 'Completed') {
+                alert('Task completed!');
+                document.getElementById('proxy-active-title').innerText = "No Active Task";
+                currentActiveTaskId = null;
+            }
+        }
+
+        // Theme toggle logic (kept from original)
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            if (document.documentElement.classList.contains('dark')) {
+                icon.className = 'fa-solid fa-moon text-blue-400 text-sm';
+            } else {
+                icon.className = 'fa-solid fa-sun text-amber-500 text-sm';
+            }
+        }
+    </script>
+</body>
+</html>

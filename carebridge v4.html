@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareBridge | Proxy-Care Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <!-- Inter Font & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Native Scrolling Layout */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        /* TEXT SCALING ENGINE (Preserves Layout) */
+        :root { --font-scale: 1; }
+        .text-\[9px\] { font-size: calc(9px * var(--font-scale)) !important; line-height: calc(14px * var(--font-scale)) !important; }
+        .text-\[10px\] { font-size: calc(10px * var(--font-scale)) !important; line-height: calc(14px * var(--font-scale)) !important; }
+        .text-\[11px\] { font-size: calc(11px * var(--font-scale)) !important; line-height: calc(16px * var(--font-scale)) !important; }
+        .text-xs { font-size: calc(0.75rem * var(--font-scale)) !important; line-height: calc(1rem * var(--font-scale)) !important; }
+        .text-sm { font-size: calc(0.875rem * var(--font-scale)) !important; line-height: calc(1.25rem * var(--font-scale)) !important; }
+        .text-base { font-size: calc(1rem * var(--font-scale)) !important; line-height: calc(1.5rem * var(--font-scale)) !important; }
+        .text-lg { font-size: calc(1.125rem * var(--font-scale)) !important; line-height: calc(1.75rem * var(--font-scale)) !important; }
+        .text-xl { font-size: calc(1.25rem * var(--font-scale)) !important; line-height: calc(1.75rem * var(--font-scale)) !important; }
+        .text-2xl { font-size: calc(1.5rem * var(--font-scale)) !important; line-height: calc(2rem * var(--font-scale)) !important; }
+        .text-3xl { font-size: calc(1.875rem * var(--font-scale)) !important; line-height: calc(2.25rem * var(--font-scale)) !important; }
+        .text-4xl { font-size: calc(2.25rem * var(--font-scale)) !important; line-height: calc(2.5rem * var(--font-scale)) !important; }
+        .text-5xl { font-size: calc(3rem * var(--font-scale)) !important; line-height: calc(1.1 * var(--font-scale)) !important; }
+        
+        .view-section { display: none; opacity: 0; transition: opacity 0.35s ease-in-out; }
+        .view-section.active { display: flex; flex-direction: column; opacity: 1; }
+        
+        .radar-sweep { background: conic-gradient(from 0deg, transparent 70%, rgba(6, 182, 212, 0.4) 100%); border-radius: 50%; animation: spin 3s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .sos-pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 25px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        .rating-star { cursor: pointer; transition: color 0.2s, transform 0.2s; }
+        .rating-star:hover { transform: scale(1.2); }
+        .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-[#070708] dark:text-white min-h-screen flex flex-col">
+
+    <!-- Global Navigation -->
+    <nav class="w-full z-50 sticky top-0 backdrop-blur-xl bg-white/80 dark:bg-black/80 border-b border-gray-200 dark:border-white/10 shrink-0 h-16 flex items-center justify-between px-4 md:px-8">
+        <div class="flex items-center gap-2 md:gap-3 cursor-pointer select-none" onclick="logout()">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
+                <i class="fa-solid fa-heart-pulse text-white text-sm"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-600 leading-none" data-i18n="nav_brand">CareBridge</span>
+                <span class="text-[9px] tracking-widest uppercase font-semibold text-gray-500" id="nav-role-badge">Proxy-Care</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-3">
+            <button id="help-btn" onclick="switchView('help')" class="hidden w-8 h-8 rounded-lg bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 flex items-center justify-center hover:bg-cyan-100 dark:hover:bg-cyan-900/40 transition">
+                <i class="fa-solid fa-circle-question text-cyan-600 dark:text-cyan-400 text-sm"></i>
+            </button>
+            <button id="settings-btn" onclick="switchView('settings')" class="hidden w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition">
+                <i class="fa-solid fa-gear text-gray-600 dark:text-gray-300 text-sm"></i>
+            </button>
+            <button onclick="toggleTheme()" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition">
+                <i id="theme-icon" class="fa-solid fa-sun text-amber-500 text-sm"></i>
+            </button>
+            <button id="nav-btn" onclick="switchView('auth')" class="px-4 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black font-bold text-xs hover:opacity-90 active:scale-95 transition shadow-sm">
+                <span data-i18n="nav_signin">Sign In</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 1. Landing View -->
+    <main id="landing" class="view-section active w-full relative items-center pb-20">
+        <div class="w-full max-w-2xl mx-auto text-center z-10 pt-20 pb-16 px-4 relative">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] bg-cyan-400/15 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+            
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-[10px] font-bold uppercase tracking-wider mb-6">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> <span data-i18n="hero_badge">Real-Time Proxy Assistance</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight leading-tight mb-6" data-i18n="hero_title">
+                A reliable stand-in child for your aging parents.
+            </h1>
+            <p class="text-sm md:text-base text-gray-600 dark:text-gray-400 mb-8 max-w-lg mx-auto font-medium leading-relaxed" data-i18n="hero_sub">
+                Connect with vetted, empathetic local proxies for hospital treatments, heavy groceries, and specialized daily needs.
+            </p>
+            <button onclick="switchView('auth')" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-sm shadow-lg hover:shadow-cyan-500/25 active:scale-95 transition">
+                <span data-i18n="access_portal">Access Portal</span> <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+        </div>
+
+        <div class="w-full max-w-6xl mx-auto px-4 shrink-0">
+            <div class="text-center mb-10">
+                <h2 class="text-2xl md:text-3xl font-black mb-2" data-i18n="tailored_support">Tailored Support for Aging in Place</h2>
+                <p class="text-sm text-gray-500 font-medium" data-i18n="tailored_sub">Verified companions who step in when you can't be there in person.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm flex flex-col items-start text-left hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4 text-purple-600 dark:text-purple-400"><i class="fa-solid fa-hospital-user text-xl"></i></div>
+                    <h3 class="font-bold text-sm mb-2" data-i18n="med_comp">Medical Companionship</h3>
+                    <p class="text-[11px] text-gray-500 leading-relaxed" data-i18n="med_desc">Hospital check-ins, clinic visits, dialysis appointments, and taking precise doctor notes.</p>
+                </div>
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm flex flex-col items-start text-left hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mb-4 text-amber-600 dark:text-amber-400"><i class="fa-solid fa-pills text-xl"></i></div>
+                    <h3 class="font-bold text-sm mb-2" data-i18n="ess_errands">Essential Errands</h3>
+                    <p class="text-[11px] text-gray-500 leading-relaxed" data-i18n="err_desc">Prescription refills, grocery runs with dietary adherence, post office visits, and item pickup.</p>
+                </div>
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm flex flex-col items-start text-left hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400"><i class="fa-solid fa-laptop-medical text-xl"></i></div>
+                    <h3 class="font-bold text-sm mb-2" data-i18n="tech_support">Tech & Home Support</h3>
+                    <p class="text-[11px] text-gray-500 leading-relaxed" data-i18n="tech_desc">Helping set up family video calls, fixing remotes, organizing pill dispensers.</p>
+                </div>
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm flex flex-col items-start text-left hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4 text-red-600 dark:text-red-400"><i class="fa-solid fa-bell-concierge text-xl"></i></div>
+                    <h3 class="font-bold text-sm mb-2" data-i18n="emerg_assist">Emergency Assistance</h3>
+                    <p class="text-[11px] text-gray-500 leading-relaxed" data-i18n="emerg_desc">One-tap Elder SOS button instantly alerts family and dispatches nearby certified proxies.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 2. Auth View -->
+    <main id="auth" class="view-section w-full items-center pt-20 px-4 pb-20">
+        <div class="w-full max-w-[400px] bg-white dark:bg-[#111113] border border-gray-200/80 dark:border-white/10 rounded-3xl p-6 shadow-2xl relative z-10">
+            <div class="text-center mb-4">
+                <h2 id="auth-heading" class="text-xl font-black text-gray-900 dark:text-white" data-i18n="nav_signin">Sign In to CareBridge</h2>
+                <p id="auth-subheading" class="text-[11px] text-gray-500 dark:text-gray-400 mt-1" data-i18n="auth_sub">Coordinate and monitor family care safely.</p>
+                <p id="auth-error" class="text-[10px] font-bold text-red-500 mt-2 hidden"></p>
+            </div>
+            
+            <div class="flex p-1 mb-4 rounded-xl bg-slate-100 dark:bg-white/5 border border-gray-200/50 dark:border-white/5" id="auth-tabs">
+                <button id="tab-login" onclick="setAuthTab('login')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm transition"><span data-i18n="nav_signin">Sign In</span></button>
+                <button id="tab-register" onclick="setAuthTab('register')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition"><span data-i18n="create_acc">Create Account</span></button>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-3">
+                <div id="field-name" class="hidden">
+                    <input id="auth-name" type="text" placeholder="Full Name" class="w-full px-3 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 focus:border-cyan-500 outline-none font-medium">
+                </div>
+                
+                <div id="field-role" class="hidden grid-cols-2 gap-2 mb-2">
+                    <label class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-[10px] font-bold cursor-pointer has-[:checked]:border-cyan-500 has-[:checked]:bg-cyan-500/10 transition text-gray-500 has-[:checked]:text-cyan-600 dark:has-[:checked]:text-cyan-400">
+                        <input type="radio" name="authRole" value="family" checked class="hidden"> 
+                        <i class="fa-solid fa-house-laptop text-sm"></i> <span data-i18n="role_family">Family</span>
+                    </label>
+                    <label class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-[10px] font-bold cursor-pointer has-[:checked]:border-cyan-500 has-[:checked]:bg-cyan-500/10 transition text-gray-500 has-[:checked]:text-cyan-600 dark:has-[:checked]:text-cyan-400">
+                        <input type="radio" name="authRole" value="elder" class="hidden"> 
+                        <i class="fa-solid fa-person-cane text-sm"></i> <span data-i18n="role_elder">Elder</span>
+                    </label>
+                </div>
+
+                <input id="auth-email" type="email" required placeholder="Email Address" class="w-full px-3 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 focus:border-cyan-500 outline-none font-medium">
+                <input id="auth-pass" type="password" required placeholder="Password" class="w-full px-3 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 focus:border-cyan-500 outline-none font-medium">
+                <button type="submit" id="auth-submit-btn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-xs shadow-md active:scale-[0.98] transition mt-1">
+                    <span data-i18n="nav_signin">Sign In</span>
+                </button>
+            </form>
+
+            <div id="helper-portal-link" class="mt-5 pt-5 border-t border-gray-200 dark:border-white/10 text-center flex flex-col gap-2">
+                <p class="text-[10px] text-gray-500" data-i18n="look_proxy">Looking to provide care?</p>
+                <button type="button" onclick="openHelperPortal()" class="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline"><span data-i18n="go_proxy">Go to Proxy Portal</span> <i class="fa-solid fa-external-link-alt text-[9px] ml-0.5"></i></button>
+            </div>
+            
+            <div id="helper-portal-back" class="mt-5 pt-5 border-t border-gray-200 dark:border-white/10 text-center hidden">
+                <button type="button" onclick="closeHelperPortal()" class="text-xs font-bold text-gray-500 hover:text-cyan-500 transition"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="back_main">Back to Main CareBridge Site</span></button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 3. Dashboard (Family View) -->
+    <main id="family-ui" class="view-section flex-col w-full px-4 py-6 md:p-8">
+        <div class="max-w-7xl mx-auto w-full flex flex-col gap-6">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-tight" id="family-greeting" data-i18n="family_cmd">Family Command Center</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1"><span data-i18n="monitoring">Monitoring:</span> <span id="family-monitoring-name" class="font-bold text-cyan-600 dark:text-cyan-400">Linked Parent</span></p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="switchView('caretakers')" class="px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 rounded-xl font-bold text-xs flex items-center gap-1.5 hover:bg-cyan-500/20 transition">
+                        <i class="fa-solid fa-users"></i> <span data-i18n="directory">Directory</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Care Team -->
+            <div class="w-full bg-white dark:bg-[#111113] p-5 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm hidden" id="family-hired-team-section">
+                <h3 class="text-sm font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-user-shield text-cyan-500"></i> <span data-i18n="my_care_team">My Care Team</span></h3>
+                <div id="family-hired-team-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Service Catalog -->
+                <div class="lg:col-span-2 flex flex-col gap-4">
+                    <h3 class="text-sm font-bold flex items-center gap-1.5"><i class="fa-solid fa-plus-circle text-blue-500"></i> <span data-i18n="req_services">Request Care Services</span></h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-5 rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] shadow-sm flex flex-col">
+                            <h4 class="text-xs font-bold text-purple-600 dark:text-purple-400 mb-3 uppercase tracking-wider"><i class="fa-solid fa-stethoscope"></i> <span data-i18n="med_health">Health & Medical</span></h4>
+                            <div class="space-y-2 flex-1">
+                                <button onclick="openBookingModal('Doctor Appointment')" class="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition text-xs font-medium text-gray-700 dark:text-gray-300">Doctor Appointment</button>
+                                <button onclick="openBookingModal('Hospital Escort')" class="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition text-xs font-medium text-gray-700 dark:text-gray-300">Hospital Escort</button>
+                                <button onclick="openBookingModal('Medicine Pickup', true)" class="w-full text-left p-3 rounded-xl bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 transition text-xs font-bold text-purple-700 dark:text-purple-400 flex justify-between items-center">
+                                    Medicine Pickup <i class="fa-solid fa-file-prescription"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="p-5 rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] shadow-sm flex flex-col">
+                            <h4 class="text-xs font-bold text-amber-600 dark:text-amber-400 mb-3 uppercase tracking-wider"><i class="fa-solid fa-bag-shopping"></i> <span data-i18n="shop_errands">Shopping & Errands</span></h4>
+                            <div class="space-y-2 flex-1">
+                                <button onclick="openBookingModal('Local Shop Purchase')" class="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition text-xs font-medium text-gray-700 dark:text-gray-300">Local Shop Purchase</button>
+                                <button onclick="openBookingModal('Grocery Shopping')" class="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition text-xs font-medium text-gray-700 dark:text-gray-300">Grocery Shopping</button>
+                                <button onclick="openBookingModal('General Small Errand')" class="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition text-xs font-medium text-gray-700 dark:text-gray-300">General Small Errand</button>
+                            </div>
+                        </div>
+
+                        <div class="p-5 rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] shadow-sm flex flex-col">
+                            <h4 class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-3 uppercase tracking-wider"><i class="fa-solid fa-house-chimney-user"></i> <span data-i18n="home_help">Home Help</span></h4>
+                            <div class="space-y-2 flex-1">
+                                <button onclick="openBookingModal('Meal Preparation')" class="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition text-xs font-medium text-gray-700 dark:text-gray-300">Cooking & Meals</button>
+                                <button onclick="openBookingModal('Household Chores')" class="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition text-xs font-medium text-gray-700 dark:text-gray-300">Household Chores</button>
+                            </div>
+                        </div>
+
+                        <div class="p-5 rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] shadow-sm flex flex-col">
+                            <h4 class="text-xs font-bold text-blue-600 dark:text-blue-400 mb-3 uppercase tracking-wider"><i class="fa-solid fa-car"></i> <span data-i18n="transport">Transport</span></h4>
+                            <div class="space-y-2 flex-1">
+                                <button onclick="openBookingModal('Accompany & Drop-Off')" class="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition text-xs font-medium text-gray-700 dark:text-gray-300">Accompany / Drop-Off</button>
+                                <button onclick="alert('Simulating Uber API Integration...')" class="w-full text-left p-3 rounded-xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 transition text-xs font-bold text-blue-700 dark:text-blue-400 flex justify-between items-center">
+                                    Book a Ride <i class="fa-brands fa-uber"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Monitoring Feed -->
+                <div class="flex flex-col gap-4">
+                    <h3 class="text-sm font-bold flex items-center gap-1.5"><i class="fa-solid fa-satellite-dish text-cyan-500"></i> <span data-i18n="act_monitor">Active Monitoring</span></h3>
+                    
+                    <!-- NEW: Live Tracking Tracker with Map -->
+                    <div class="p-5 rounded-3xl bg-white dark:bg-[#111113] border border-gray-200/70 dark:border-white/10 shadow-sm flex flex-col">
+                        <h4 class="text-xs font-bold mb-4 uppercase tracking-wider text-gray-500"><i class="fa-solid fa-route mr-1"></i> Caretaker Tracker</h4>
+                        
+                        <div class="w-full h-32 rounded-xl bg-[#0f172a] border border-cyan-500/20 relative overflow-hidden flex items-center justify-center shadow-inner mb-4">
+                            <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(#334155 0 1px, transparent 1px 100%), repeating-linear-gradient(90deg, #334155 0 1px, transparent 1px 100%); background-size: 20px 20px;"></div>
+                            <div class="absolute top-2 right-2 px-2 py-1 bg-cyan-500 text-white text-[8px] font-bold uppercase tracking-wider rounded z-30">Live Route</div>
+                            <div class="absolute z-20 flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.8)] border-2 border-white">
+                                    <i class="fa-solid fa-location-arrow text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-l-2 border-cyan-500/30 ml-2 pl-4 space-y-5 relative" id="family-activity-log">
+                            <!-- Populated by JS Backend Poll -->
+                            <p class="text-xs text-gray-500">Awaiting Caretaker Location...</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 4. Helper (Proxy) View -->
+    <main id="helper-ui" class="view-section flex-col w-full px-4 py-6 md:p-8">
+        <div class="max-w-7xl mx-auto w-full flex flex-col gap-6">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-tight" id="helper-greeting" data-i18n="helper_cmd">Proxy Command Center</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage your tasks and schedule.</p>
+                </div>
+                <div class="px-4 py-2 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 rounded-xl font-bold text-xs flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span> Available
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left: Active & Available -->
+                <div class="lg:col-span-2 flex flex-col gap-6">
+                    
+                    <div class="flex flex-col rounded-3xl border border-cyan-500/50 bg-white dark:bg-[#111113] p-6 shadow-xl">
+                        <div class="flex justify-between items-start mb-4 border-b border-gray-200 dark:border-white/10 pb-4">
+                            <div>
+                                <h2 class="text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> IN PROGRESS</h2>
+                                <h3 class="font-black text-xl" id="helper-active-task-title">No Active Task</h3>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-bold text-gray-400" id="helper-active-task-earn">Earn: ₹0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full h-40 mb-5 rounded-2xl bg-[#0f172a] border border-cyan-500/20 relative overflow-hidden flex items-center justify-center shadow-inner">
+                            <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(#334155 0 1px, transparent 1px 100%), repeating-linear-gradient(90deg, #334155 0 1px, transparent 1px 100%); background-size: 20px 20px;"></div>
+                            <div class="absolute top-3 left-3 flex flex-col gap-2 z-30">
+                                <div class="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg text-xs font-mono text-cyan-400 border border-cyan-500/30">
+                                    <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> GPS ACTIVE
+                                </div>
+                            </div>
+                            <div class="absolute z-20 flex flex-col items-center">
+                                <div class="w-10 h-10 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.8)] border-2 border-white">
+                                    <i class="fa-solid fa-location-arrow text-sm"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button onclick="markHelperArrived()" class="flex-1 py-3.5 rounded-xl bg-cyan-600 text-white font-black text-sm shadow-md active:scale-95 transition">
+                                <i class="fa-solid fa-location-dot mr-1"></i> Mark Arrived
+                            </button>
+                            <button onclick="markTaskComplete()" class="flex-1 py-3.5 rounded-xl bg-emerald-600 text-white font-black text-sm shadow-md active:scale-95 transition">
+                                <i class="fa-solid fa-check-circle mr-1"></i> Mark Complete
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- New Requests Feed -->
+                    <div class="flex flex-col rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] p-6 shadow-sm">
+                        <h3 class="text-sm font-bold mb-4 uppercase tracking-wider text-gray-500">Available Requests Near You</h3>
+                        <div class="space-y-4" id="helper-requests-feed">
+                            <!-- Populated via JS Backend -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Profile & Stats -->
+                <div class="flex flex-col gap-6">
+                    <div class="flex flex-col rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] p-6 shadow-sm">
+                        <h3 class="text-xs font-bold mb-4 flex items-center gap-1.5 uppercase tracking-wider text-gray-500">
+                            <i class="fa-solid fa-id-card"></i> Your Public Profile
+                        </h3>
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center shadow-md">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Proxy" class="w-14 h-14 rounded-full bg-white/20">
+                            </div>
+                            <div>
+                                <h4 class="font-black text-lg" id="helper-profile-name">Ananya Sharma</h4>
+                                <div class="flex items-center text-amber-500 text-sm mt-1">
+                                    <i class="fa-solid fa-star"></i> 4.9 <span class="text-gray-500 ml-1 font-medium text-xs" id="helper-completed-tasks">(0 tasks)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] p-6 shadow-sm">
+                        <h3 class="text-xs font-bold mb-4 flex items-center gap-1.5 uppercase tracking-wider text-gray-500">
+                            <i class="fa-solid fa-chart-line"></i> Performance & Earnings
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="p-4 rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/30 flex flex-col justify-center text-center">
+                                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Earnings</p>
+                                <h4 class="text-2xl font-black text-green-600 dark:text-green-400" id="helper-earnings">₹0</h4>
+                            </div>
+                            <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/30 flex flex-col justify-center text-center">
+                                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Status</p>
+                                <h4 class="text-xl font-black text-blue-600 dark:text-blue-400">Active</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- 5. Caretaker Directory View (For Family) -->
+    <main id="caretakers" class="view-section flex-col w-full px-4 py-6 md:p-8">
+        <div class="max-w-7xl mx-auto w-full flex flex-col gap-6">
+            <div class="flex items-center gap-3 mb-2">
+                <button onclick="goBack()" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-white/20 transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-tight" data-i18n="directory">Verified Caretakers</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" data-i18n="browse_hire">Browse, hire, and connect with local proxies.</p>
+                </div>
+            </div>
+
+            <!-- Caretaker Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="caretaker-directory-list">
+                <!-- Dynamically Populated by JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 6. Settings View -->
+    <main id="settings" class="view-section flex-col w-full px-4 py-6 md:p-8">
+        <div class="max-w-4xl mx-auto w-full flex flex-col gap-6 pb-20">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                    <button onclick="goBack()" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-white/20 transition">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-black tracking-tight" data-i18n="settings_title">Platform Settings</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage profiles, preferences, and security.</p>
+                    </div>
+                </div>
+                <button onclick="saveSettings()" class="hidden md:block px-6 py-2.5 rounded-xl bg-cyan-600 text-white font-bold text-sm hover:bg-cyan-700 active:scale-95 transition shadow-lg" data-i18n="btn_save">Save Changes</button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Linking Code -->
+                <div id="family-code-section" class="p-6 rounded-2xl border border-blue-500/40 bg-blue-50/50 dark:bg-blue-900/10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-base font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2 mb-1"><i class="fa-solid fa-link"></i> Family Linking Code</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400" id="family-code-desc">Share this code with your Elder to link their account.</p>
+                    </div>
+                    <div id="family-code-display-area" class="flex items-center gap-2">
+                        <span id="set-family-code-output" class="px-5 py-2 bg-white dark:bg-black border border-blue-200 dark:border-blue-800 rounded-lg font-mono font-black text-xl tracking-widest text-blue-600 dark:text-blue-400">------</span>
+                    </div>
+                    <div id="elder-code-input-area" class="hidden flex items-center gap-2 w-full md:w-auto">
+                        <input id="set-elder-link-input" type="text" placeholder="Enter Family Code" class="w-full md:w-48 px-4 py-2.5 text-sm rounded-lg bg-white dark:bg-black border border-blue-200 dark:border-blue-800 focus:border-blue-500 outline-none font-mono font-bold uppercase">
+                        <button onclick="linkElderAccount()" class="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition">Link</button>
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] shadow-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2" data-i18n="set_fullname">Full Name</label>
+                            <input id="set-name" type="text" class="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 focus:border-cyan-500 outline-none font-bold transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2" data-i18n="set_lang">Language</label>
+                            <select id="set-language" class="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 focus:border-cyan-500 outline-none font-bold transition cursor-pointer">
+                                <option value="en">English</option>
+                                <option value="hi">हिंदी (Hindi)</option>
+                                <option value="ta">தமிழ் (Tamil)</option>
+                                <option value="mr">मराठी (Marathi)</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 pt-4 border-t border-gray-200 dark:border-white/10">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2" data-i18n="set_pass">Change Password</label>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <input id="set-old-pass" type="password" placeholder="Current Password" class="flex-1 px-4 py-3 text-sm rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 outline-none transition">
+                                <input id="set-new-pass" type="password" placeholder="New Password" class="flex-1 px-4 py-3 text-sm rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 outline-none transition">
+                                <button onclick="changePassword()" class="px-6 py-3 rounded-xl bg-gray-800 dark:bg-white text-white dark:text-black font-bold text-sm hover:bg-gray-700 dark:hover:bg-gray-200 transition">Update</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                    <button onclick="saveSettings()" class="md:hidden flex-1 px-6 py-3.5 rounded-xl bg-cyan-600 text-white font-black text-sm hover:bg-cyan-700 active:scale-95 transition shadow-lg" data-i18n="btn_save">Save Settings</button>
+                    <button onclick="logout()" class="flex-1 px-6 py-3.5 rounded-xl bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold text-sm border border-red-200 dark:border-red-800 hover:bg-red-200 active:scale-95 transition shadow-sm" data-i18n="btn_logout">Sign Out Account</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 7. Help View -->
+    <main id="help" class="view-section flex-col w-full px-4 py-6 md:p-8">
+        <div class="max-w-4xl mx-auto w-full flex flex-col gap-6">
+            <div class="flex items-center gap-3 mb-2">
+                <button onclick="goBack()" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-white/20 transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-tight">Help & FAQ</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Learn how CareBridge keeps your family safe.</p>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div class="p-6 rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] shadow-sm">
+                    <h3 class="text-base font-bold text-blue-600 dark:text-blue-400 mb-2">How does the SOS button work?</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+                        The one-tap emergency SOS button immediately alerts the assigned helper, the adult child, and a registered local emergency contact simultaneously[cite: 1, 2].
+                    </p>
+                </div>
+                <div class="p-6 rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] shadow-sm">
+                    <h3 class="text-base font-bold text-blue-600 dark:text-blue-400 mb-2">How do I retain control of tasks?</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+                        CareBridge is built on a Dignity & Control engine[cite: 2]. The Elder View features an "Approve Task" button which must be clicked before the proxy can begin the job[cite: 2].
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 8. Elder View (Highly Accessible 2-Column Grid) -->
+    <main id="elder-ui" class="view-section flex-col w-full px-4 py-6 md:p-8 bg-slate-100 dark:bg-black text-black dark:text-white">
+        <div class="max-w-4xl mx-auto w-full flex flex-col gap-6">
+            
+            <div class="flex justify-between items-center mb-2">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-black" id="elder-greeting" data-i18n="elder_title">Good Afternoon!</h1>
+                    <p class="text-base text-gray-600 dark:text-gray-400 font-bold mt-2" data-i18n="elder_sub">Tap a card below to manage your day.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pb-10">
+                
+                <!-- Health & Medical -->
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border-2 border-purple-100 dark:border-purple-900/30 shadow-md flex flex-col h-full hover:border-purple-400 transition text-left">
+                    <div class="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-500 mb-4 shrink-0"><i class="fa-solid fa-hospital-user text-3xl"></i></div>
+                    <h3 class="font-black text-xl mb-2 text-gray-900 dark:text-white leading-tight" data-i18n="med_health">Health & Medical</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium mb-6 flex-1">Schedule doctor visits, get routine checkups, or order medicine refills from the pharmacy.</p>
+                    <button onclick="triggerElderAction('Opened Medical Module')" class="w-full py-4 rounded-2xl bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold text-base flex items-center justify-center gap-2 active:scale-95 transition">Open Medical <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+
+                <!-- Shopping & Errands -->
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border-2 border-amber-100 dark:border-amber-900/30 shadow-md flex flex-col h-full hover:border-amber-400 transition text-left">
+                    <div class="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500 mb-4 shrink-0"><i class="fa-solid fa-basket-shopping text-3xl"></i></div>
+                    <h3 class="font-black text-xl mb-2 text-gray-900 dark:text-white leading-tight" data-i18n="shop_errands">Shopping & Errands</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium mb-6 flex-1">Request heavy grocery runs, visits to the local store, or basic delivery tasks.</p>
+                    <button onclick="triggerElderAction('Opened Shopping Module')" class="w-full py-4 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-bold text-base flex items-center justify-center gap-2 active:scale-95 transition">Open Errands <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+
+                <!-- Home Help -->
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border-2 border-emerald-100 dark:border-emerald-900/30 shadow-md flex flex-col h-full hover:border-emerald-400 transition text-left">
+                    <div class="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500 mb-4 shrink-0"><i class="fa-solid fa-house-chimney-user text-3xl"></i></div>
+                    <h3 class="font-black text-xl mb-2 text-gray-900 dark:text-white leading-tight" data-i18n="home_help">Home Help</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium mb-6 flex-1">Get help with meal preparation, cooking for the next day, or light household chores.</p>
+                    <button onclick="triggerElderAction('Opened Home Help Module')" class="w-full py-4 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold text-base flex items-center justify-center gap-2 active:scale-95 transition">Open Home Help <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+
+                <!-- Transport -->
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border-2 border-blue-100 dark:border-blue-900/30 shadow-md flex flex-col h-full hover:border-blue-400 transition text-left">
+                    <div class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 mb-4 shrink-0"><i class="fa-solid fa-car text-3xl"></i></div>
+                    <h3 class="font-black text-xl mb-2 text-gray-900 dark:text-white leading-tight" data-i18n="transport">Transport</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium mb-6 flex-1">Ask a proxy to accompany you to an event, or book a safe ride directly to your destination.</p>
+                    <button onclick="triggerElderAction('Opened Transport Module')" class="w-full py-4 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold text-base flex items-center justify-center gap-2 active:scale-95 transition">Open Transport <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+
+                <!-- Call For Help -->
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border-2 border-indigo-100 dark:border-indigo-900/30 shadow-md flex flex-col h-full hover:border-indigo-400 transition text-left">
+                    <div class="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500 mb-4 shrink-0"><i class="fa-solid fa-phone-volume text-3xl"></i></div>
+                    <h3 class="font-black text-xl mb-2 text-gray-900 dark:text-white leading-tight" data-i18n="call_help">Call for Help</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium mb-6 flex-1">Immediately ring your family contact or your currently assigned local proxy.</p>
+                    <button onclick="triggerElderAction('Initiated a Call for Help')" class="w-full py-4 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-bold text-base flex items-center justify-center gap-2 active:scale-95 transition"><i class="fa-solid fa-phone"></i> Call Now</button>
+                </div>
+
+                <!-- Active Tasks / Approvals -->
+                <div class="bg-white dark:bg-[#111113] p-6 rounded-3xl border-2 border-cyan-100 dark:border-cyan-900/30 shadow-md flex flex-col h-full hover:border-cyan-400 transition text-left">
+                    <div class="w-16 h-16 rounded-2xl bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center text-cyan-500 mb-4 shrink-0"><i class="fa-solid fa-calendar-check text-3xl"></i></div>
+                    <h3 class="font-black text-xl mb-2 text-gray-900 dark:text-white leading-tight" data-i18n="my_bookings">My Bookings</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium mb-6 flex-1">View your schedule and safely approve proxies to begin their tasks when they arrive.</p>
+                    <button onclick="triggerElderAction('Viewed Bookings')" class="w-full py-4 rounded-2xl bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 font-bold text-base flex items-center justify-center gap-2 active:scale-95 transition">View Schedule <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+
+                <!-- Massive Elder SOS -->
+                <button onclick="triggerElderSOS()" class="sm:col-span-2 w-full py-8 rounded-3xl bg-red-600 text-white font-black shadow-xl active:scale-95 transition sos-pulse flex flex-col items-center justify-center gap-2 mt-4">
+                    <i class="fa-solid fa-triangle-exclamation text-5xl mb-1"></i> 
+                    <span class="text-4xl tracking-wide" data-i18n="emerg_sos">EMERGENCY SOS</span>
+                    <span class="text-lg font-medium opacity-90 mt-2" data-i18n="sos_desc">Press once to alert family, proxies & medical services.</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Template for Bookings -->
+    <div id="booking-modal" class="fixed inset-0 z-[100] modal-overlay hidden flex items-center justify-center p-4 opacity-0 transition-opacity">
+        <div class="w-full max-w-md bg-white dark:bg-[#111113] rounded-3xl p-6 shadow-2xl scale-95 transition-transform" id="booking-modal-content">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-200 dark:border-white/10 pb-3">
+                <h3 class="font-black text-lg" id="modal-title">Book Service</h3>
+                <button onclick="closeBookingModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Instructions / Details</label>
+                    <textarea id="book-notes" rows="3" class="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 outline-none placeholder:text-gray-400" placeholder="Enter details..."></textarea>
+                </div>
+                <button onclick="submitBooking()" class="w-full py-3.5 rounded-xl bg-cyan-600 text-white font-bold text-sm hover:bg-cyan-700 transition mt-2">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- TRANSLATION ENGINE ---
+        const translations = {
+            en: {
+                nav_brand: "CareBridge", nav_signin: "Sign In", access_portal: "Access Portal",
+                hero_badge: "Real-Time Proxy Assistance", hero_title: "A reliable stand-in child for your aging parents.", hero_sub: "Connect with vetted, empathetic local proxies for hospital treatments, heavy groceries, and specialized daily needs.",
+                tailored_support: "Tailored Support for Aging in Place", tailored_sub: "Verified companions who step in when you can't be there in person.",
+                family_cmd: "Family Command Center", elder_title: "Good Afternoon!", elder_sub: "Tap a card below to manage your day.", helper_cmd: "Proxy Command Center",
+                settings_title: "Platform Settings", directory: "Verified Caretakers", browse_hire: "Browse, hire, and connect with local proxies.", btn_save: "Save Changes", btn_logout: "Sign Out Account",
+                med_health: "Health & Medical", med_desc: "Hospital check-ins, clinic visits, dialysis appointments, and taking precise doctor notes.",
+                shop_errands: "Shopping & Errands", err_desc: "Prescription refills, grocery runs with dietary adherence, post office visits, and item pickup.",
+                home_help: "Home Help", tech_support: "Tech & Home Support", tech_desc: "Helping set up family video calls, fixing remotes, organizing pill dispensers.",
+                transport: "Transport", my_bookings: "My Bookings", call_help: "Call for Help",
+                emerg_assist: "Emergency Assistance", emerg_desc: "One-tap Elder SOS button instantly alerts family and dispatches nearby certified proxies.",
+                emerg_sos: "EMERGENCY SOS", sos_desc: "Press once to alert family, proxies & medical services.",
+                monitoring: "Monitoring:", my_care_team: "My Care Team", req_services: "Request Care Services", act_monitor: "Active Monitoring", live_log: "Live Activity Log",
+                look_proxy: "Looking to provide care?", go_proxy: "Go to Proxy Portal", back_main: "Back to Main CareBridge Site", create_acc: "Create Account", role_family: "Family", role_elder: "Elder",
+                set_fullname: "Full Name", set_lang: "Language", set_pass: "Change Password"
+            },
+            hi: {
+                nav_brand: "केयरब्रिज", nav_signin: "साइन इन करें", access_portal: "पोर्टल खोलें",
+                hero_badge: "रियल-टाइम प्रॉक्सी सहायता", hero_title: "आपके बुजुर्ग माता-पिता के लिए एक भरोसेमंद साथी।", hero_sub: "अस्पताल के उपचार, भारी किराने का सामान, और दैनिक जरूरतों के लिए सत्यापित, सहानुभूतिपूर्ण स्थानीय प्रॉक्सी से जुड़ें।",
+                tailored_support: "बुजुर्गों के लिए विशेष देखभाल", tailored_sub: "सत्यापित साथी जो आपकी अनुपस्थिति में मदद करते हैं।",
+                family_cmd: "परिवार कमांड सेंटर", elder_title: "शुभ दोपहर!", elder_sub: "अपना दिन प्रबंधित करने के लिए नीचे दिए गए कार्ड पर टैप करें।", helper_cmd: "प्रॉक्सी कमांड सेंटर",
+                settings_title: "प्लेटफ़ॉर्म सेटिंग्स", directory: "सत्यापित केयरटेकर", browse_hire: "स्थानीय प्रॉक्सी खोजें, किराए पर लें और जुड़ें।", btn_save: "परिवर्तन सहेजें", btn_logout: "साइन आउट",
+                med_health: "स्वास्थ्य और चिकित्सा", med_desc: "अस्पताल चेक-इन, क्लिनिक दौरे, डायलिसिस नियुक्तियां।",
+                shop_errands: "खरीदारी और काम", err_desc: "दवाएं, किराने की दौड़, और भारी सामान लाना।",
+                home_help: "घरेलू मदद", tech_support: "तकनीकी और घरेलू सहायता", tech_desc: "वीडियो कॉल सेट अप करना, रिमोट ठीक करना।",
+                transport: "परिवहन", my_bookings: "मेरी बुकिंग", call_help: "मदद के लिए कॉल करें",
+                emerg_assist: "आपातकालीन सहायता", emerg_desc: "वन-टैप एल्डर SOS बटन तुरंत परिवार को अलर्ट करता है।",
+                emerg_sos: "आपातकालीन SOS", sos_desc: "परिवार, प्रॉक्सी और चिकित्सा सेवाओं को सचेत करने के लिए दबाएं।",
+                monitoring: "निगरानी:", my_care_team: "मेरी केयर टीम", req_services: "देखभाल सेवाओं का अनुरोध करें", act_monitor: "सक्रिय निगरानी", live_log: "लाइव गतिविधि लॉग",
+                look_proxy: "क्या आप देखभाल प्रदान करना चाहते हैं?", go_proxy: "प्रॉक्सी पोर्टल पर जाएं", back_main: "केयरब्रिज साइट पर वापस जाएं", create_acc: "खाता बनाएं", role_family: "परिवार", role_elder: "बुजुर्ग",
+                set_fullname: "पूरा नाम", set_lang: "भाषा", set_pass: "पासवर्ड बदलें"
+            },
+            ta: {
+                nav_brand: "கேர்பிரிட்ஜ்", nav_signin: "உள்நுழைய", access_portal: "உள்நுழைய",
+                hero_badge: "நிகழ்நேர உதவி", hero_title: "உங்கள் முதியோருக்கான நம்பகமான துணை.", hero_sub: "மருத்துவமனை சிகிச்சைகள் மற்றும் அன்றாட தேவைகளுக்கான சரிபார்க்கப்பட்ட உள்ளூர் உதவியாளர்களுடன் இணையுங்கள்.",
+                tailored_support: "முதியோருக்கான சிறப்பு ஆதரவு", tailored_sub: "நீங்கள் இல்லாத போது உதவும் சரிபார்க்கப்பட்ட தோழர்கள்.",
+                family_cmd: "குடும்ப கட்டுப்பாட்டு மையம்", elder_title: "மதிய வணக்கம்!", elder_sub: "உங்கள் நாளை நிர்வகிக்க ஒரு கார்டைத் தட்டவும்.", helper_cmd: "ப்ராக்ஸி மையம்",
+                settings_title: "அமைப்புகள்", directory: "பராமரிப்பாளர்கள்", browse_hire: "உள்ளூர் உதவியாளர்களைத் தேடி இணைக்கவும்.", btn_save: "மாற்றங்களைச் சேமி", btn_logout: "வெளியேறு",
+                med_health: "மருத்துவம்", med_desc: "மருத்துவமனை சோதனைகள், கிளினிக் வருகைகள்.",
+                shop_errands: "பொருட்கள் வாங்குதல்", err_desc: "மருந்து, மளிகை கடைகள்.",
+                home_help: "வீட்டு உதவி", tech_support: "தொழில்நுட்ப உதவி", tech_desc: "வீடியோ அழைப்புகள் அமைத்தல்.",
+                transport: "போக்குவரத்து", my_bookings: "என் முன்பதிவுகள்", call_help: "உதவிக்கு அழைக்கவும்",
+                emerg_assist: "அவசர உதவி", emerg_desc: "ஒரு தட்டலில் குடும்பத்தை எச்சரிக்கும் SOS.",
+                emerg_sos: "அவசர SOS", sos_desc: "குடும்பம் மற்றும் மருத்துவ சேவைகளை எச்சரிக்க அழுத்தவும்.",
+                monitoring: "கண்காணிப்பு:", my_care_team: "என் பராமரிப்பு குழு", req_services: "சேவைகளை கோருங்கள்", act_monitor: "நேரடி கண்காணிப்பு", live_log: "நேரடி செயல்பாடு",
+                look_proxy: "பராமரிப்பு வழங்க விரும்புகிறீர்களா?", go_proxy: "ப்ராக்ஸி போர்ட்டலுக்குச் செல்லவும்", back_main: "கேர்பிரிட்ஜ் தளத்திற்குத் திரும்பு", create_acc: "கணக்கை உருவாக்கு", role_family: "குடும்பம்", role_elder: "முதியோர்",
+                set_fullname: "முழு பெயர்", set_lang: "மொழி", set_pass: "கடவுச்சொல்லை மாற்றவும்"
+            },
+            mr: {
+                nav_brand: "केअरब्रिज", nav_signin: "साइन इन करा", access_portal: "पोर्टल उघडा",
+                hero_badge: "रिअल-टाइम प्रॉक्सी मदत", hero_title: "तुमच्या वृद्ध पालकांसाठी एक विश्वासार्ह साथीदार.", hero_sub: "रुग्णालय उपचार आणि दैनंदिन गरजांसाठी स्थानिक प्रॉक्सींशी कनेक्ट व्हा.",
+                tailored_support: "वृद्धांसाठी विशेष काळजी", tailored_sub: "तुम्ही नसताना मदत करणारे पडताळलेले साथीदार.",
+                family_cmd: "कुटुंब कमांड सेंटर", elder_title: "शुभ दुपार!", elder_sub: "तुमचा दिवस व्यवस्थापित करण्यासाठी खालील कार्ड टॅप करा.", helper_cmd: "प्रॉक्सी सेंटर",
+                settings_title: "सेटिंग्ज", directory: "काळजी घेणारे", browse_hire: "स्थानिक प्रॉक्सी शोधा आणि कनेक्ट करा.", btn_save: "बदल जतन करा", btn_logout: "साइन आउट",
+                med_health: "आरोग्य आणि वैद्यकीय", med_desc: "रुग्णालय तपासणी, दवाखाना भेटी.",
+                shop_errands: "खरेदी आणि कामे", err_desc: "औषधे, किराणा माल.",
+                home_help: "घरगुती मदत", tech_support: "तांत्रिक मदत", tech_desc: "व्हिडिओ कॉल सेट करणे.",
+                transport: "वाहतूक", my_bookings: "माझे बुकिंग", call_help: "मदतीसाठी कॉल करा",
+                emerg_assist: "आपत्कालीन मदत", emerg_desc: "वन-टॅप SOS बटण कुटुंबाला सतर्क करते.",
+                emerg_sos: "आपत्कालीन SOS", sos_desc: "कुटुंब आणि वैद्यकीय सेवांना सतर्क करण्यासाठी दाबा.",
+                monitoring: "निरीक्षण:", my_care_team: "माझी केअर टीम", req_services: "सेवांची विनंती करा", act_monitor: "सक्रिय निरीक्षण", live_log: "लाइव्ह लॉग",
+                look_proxy: "तुम्हाला काळजी घ्यायची आहे का?", go_proxy: "प्रॉक्सी पोर्टलवर जा", back_main: "मुख्य साइटवर परत जा", create_acc: "खाते तयार करा", role_family: "कुटुंब", role_elder: "वृद्ध",
+                set_fullname: "पूर्ण नाव", set_lang: "भाषा", set_pass: "पासवर्ड बदला"
+            }
+        };
+
+        function applyLanguage() {
+            const lang = (currentUser && currentUser.language) ? currentUser.language : 'en';
+            const dict = translations[lang] || translations.en;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(dict[key]) {
+                    if(el.tagName === 'INPUT' && el.placeholder) el.placeholder = dict[key];
+                    else el.innerHTML = dict[key];
+                }
+            });
+        }
+
+        // --- MOCK BACKEND DATABASE ---
+        function getDB() {
+            let db = localStorage.getItem('carebridgeDB');
+            if (!db) {
+                db = {
+                    users: {},
+                    sharedActivityLog: [
+                        { time: getTime(), text: "System Initialized. Awaiting proxy updates." }
+                    ],
+                    publicHelpers: [
+                        { id: 'h1', name: 'Sarah Jenkins', rating: 4.9, role: 'Medical Escort' },
+                        { id: 'h2', name: 'Amit Roy', rating: 4.8, role: 'Errands & Logistics' },
+                        { id: 'h3', name: 'Dr. Priya', rating: 5.0, role: 'Physiotherapist' }
+                    ]
+                };
+                localStorage.setItem('carebridgeDB', JSON.stringify(db));
+            } else {
+                db = JSON.parse(db);
+                if (!db.sharedActivityLog) db.sharedActivityLog = [];
+            }
+            return db;
+        }
+        function saveDB(db) { localStorage.setItem('carebridgeDB', JSON.stringify(db)); }
+        function generateFamilyCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+        function getTime() { return new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); }
+
+        let currentUser = null; 
+        let authMode = 'login';
+        let currentServiceBooking = '';
+
+        window.onload = () => {
+            const savedSession = localStorage.getItem('carebridgeSession');
+            if (savedSession) {
+                currentUser = JSON.parse(savedSession);
+                // Ensure arrays exist for legacy mocked accounts
+                if(!currentUser.tasks) currentUser.tasks = [];
+                if(!currentUser.hiredHelpers) currentUser.hiredHelpers = [];
+                routeUserToDashboard();
+            } else {
+                applyLanguage();
+            }
+        };
+
+        // Poll Shared Log for Family View
+        setInterval(() => {
+            if (currentUser && currentUser.role === 'family') {
+                renderFamilyLogFromDB();
+            }
+        }, 3000);
+
+        // --- AUTHENTICATION ---
+        function setAuthTab(tab) {
+            authMode = tab;
+            const isLogin = tab === 'login';
+            document.getElementById('tab-login').className = isLogin ? 'flex-1 py-1.5 text-[11px] font-bold rounded-lg bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm transition' : 'flex-1 py-1.5 text-[11px] font-bold rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition';
+            document.getElementById('tab-register').className = !isLogin ? 'flex-1 py-1.5 text-[11px] font-bold rounded-lg bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm transition' : 'flex-1 py-1.5 text-[11px] font-bold rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition';
+            document.getElementById('auth-heading').innerText = isLogin ? (translations[currentUser?.language || 'en'].nav_signin || "Sign In") : (translations[currentUser?.language || 'en'].create_acc || "Create Account");
+            
+            document.getElementById('field-name').style.display = isLogin ? 'none' : 'block';
+            document.getElementById('field-role').style.display = isLogin ? 'none' : 'grid';
+            document.getElementById('auth-error').classList.add('hidden');
+        }
+
+        function openHelperPortal() {
+            authMode = 'register';
+            document.getElementById('auth-heading').innerText = 'Proxy Portal Registration';
+            document.getElementById('field-role').innerHTML = `<label class="col-span-2 flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-cyan-500 bg-cyan-500/10 text-[10px] font-bold text-cyan-600 dark:text-cyan-400"><input type="radio" name="authRole" value="helper" checked class="hidden"><i class="fa-solid fa-user-nurse text-sm"></i> Care Proxy (Helper)</label>`;
+            document.getElementById('helper-portal-link').classList.add('hidden');
+            document.getElementById('helper-portal-back').classList.remove('hidden');
+            setAuthTab('register');
+            switchView('auth');
+        }
+
+        function closeHelperPortal() {
+            document.getElementById('field-role').innerHTML = `
+                <label class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-[10px] font-bold cursor-pointer has-[:checked]:border-cyan-500 has-[:checked]:bg-cyan-500/10 transition text-gray-500 has-[:checked]:text-cyan-600 dark:has-[:checked]:text-cyan-400"><input type="radio" name="authRole" value="family" checked class="hidden"><i class="fa-solid fa-house-laptop text-sm"></i> <span data-i18n="role_family">Family</span></label>
+                <label class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-[10px] font-bold cursor-pointer has-[:checked]:border-cyan-500 has-[:checked]:bg-cyan-500/10 transition text-gray-500 has-[:checked]:text-cyan-600 dark:has-[:checked]:text-cyan-400"><input type="radio" name="authRole" value="elder" class="hidden"><i class="fa-solid fa-person-cane text-sm"></i> <span data-i18n="role_elder">Elder</span></label>`;
+            document.getElementById('helper-portal-back').classList.add('hidden');
+            document.getElementById('helper-portal-link').classList.remove('hidden');
+            applyLanguage();
+            setAuthTab('login');
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value.toLowerCase();
+            const pass = document.getElementById('auth-pass').value;
+            const errorEl = document.getElementById('auth-error');
+            const db = getDB();
+
+            if (authMode === 'register') {
+                const name = document.getElementById('auth-name').value;
+                const roleElement = document.querySelector('input[name="authRole"]:checked');
+                
+                if (!roleElement) { errorEl.innerText = "Please select a role."; errorEl.classList.remove('hidden'); return; }
+                if (db.users[email]) { errorEl.innerText = "Email already exists."; errorEl.classList.remove('hidden'); return; }
+                
+                const role = roleElement.value;
+                const famCode = role === 'family' ? generateFamilyCode() : null;
+                db.users[email] = { 
+                    name, email, pass, role, familyCode: famCode, language: 'en',
+                    tasks: [], hiredHelpers: [], earnings: 0 
+                };
+                saveDB(db);
+                currentUser = db.users[email];
+            } else {
+                const user = db.users[email];
+                if (!user || user.pass !== pass) { errorEl.innerText = "Invalid credentials."; errorEl.classList.remove('hidden'); return; }
+                
+                if(!user.tasks) user.tasks = [];
+                if(!user.hiredHelpers) user.hiredHelpers = [];
+                currentUser = user; 
+            }
+
+            saveUserSession();
+            document.getElementById('auth-email').value = '';
+            document.getElementById('auth-pass').value = '';
+            errorEl.classList.add('hidden');
+            routeUserToDashboard();
+        }
+
+        function logout() {
+            if(!currentUser) { switchView('landing'); return; }
+            currentUser = null;
+            localStorage.removeItem('carebridgeSession');
+            closeHelperPortal();
+            applyLanguage();
+            switchView('landing');
+        }
+
+        // --- DASHBOARD ROUTING & RENDER ---
+        function routeUserToDashboard() {
+            if (!currentUser) return switchView('landing');
+            applyLanguage();
+            
+            const firstName = currentUser.name ? currentUser.name.split(' ')[0] : 'User';
+            document.getElementById('nav-role-badge').innerText = `Role: ${currentUser.role.toUpperCase()}`;
+            
+            // Populate Settings
+            document.getElementById('set-name').value = currentUser.name || '';
+            if (currentUser.language) document.getElementById('set-language').value = currentUser.language;
+
+            if (currentUser.role === 'family') {
+                document.getElementById('family-code-display-area').classList.remove('hidden');
+                document.getElementById('elder-code-input-area').classList.add('hidden');
+                document.getElementById('set-family-code-output').innerText = currentUser.familyCode || 'ERROR';
+                
+                document.getElementById('family-greeting').innerText = `${translations[currentUser.language || 'en']?.family_cmd || 'Family Command Center'} - ${firstName}`;
+                renderFamilyDashboard();
+                switchView('family-ui');
+            } else if (currentUser.role === 'elder') {
+                document.getElementById('family-code-display-area').classList.add('hidden');
+                document.getElementById('elder-code-input-area').classList.remove('hidden');
+                document.getElementById('elder-code-input-area').classList.add('flex');
+                
+                switchView('elder-ui');
+            } else if (currentUser.role === 'helper') {
+                document.getElementById('helper-profile-name').innerText = currentUser.name || 'Proxy Member';
+                document.getElementById('helper-completed-tasks').innerText = `(${currentUser.tasks.length} tasks)`;
+                document.getElementById('helper-earnings').innerText = `₹${currentUser.earnings || 0}`;
+                renderHelperDashboard();
+                switchView('helper-ui');
+            }
+        }
+
+        function goBack() { routeUserToDashboard(); }
+
+        function switchView(viewId) {
+            if (currentUser) {
+                if (currentUser.role === 'family' && !['family-ui', 'caretakers', 'settings', 'help'].includes(viewId)) viewId = 'family-ui';
+                if (currentUser.role === 'elder' && !['elder-ui', 'settings', 'help'].includes(viewId)) viewId = 'elder-ui';
+                if (currentUser.role === 'helper' && !['helper-ui', 'settings', 'help'].includes(viewId)) viewId = 'helper-ui';
+            }
+
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(viewId);
+            if (target) target.classList.add('active');
+
+            const navBtn = document.getElementById('nav-btn');
+            const settingsBtn = document.getElementById('settings-btn');
+            const helpBtn = document.getElementById('help-btn');
+
+            if (currentUser && ['family-ui', 'elder-ui', 'helper-ui', 'caretakers', 'settings', 'help'].includes(viewId)) {
+                navBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i>';
+                navBtn.setAttribute('onclick', "logout()");
+                settingsBtn.classList.remove('hidden');
+                helpBtn.classList.remove('hidden');
+            } else {
+                navBtn.innerHTML = `<span data-i18n="nav_signin">${translations[currentUser?.language || 'en']?.nav_signin || "Sign In"}</span>`;
+                navBtn.setAttribute('onclick', "switchView('auth')");
+                settingsBtn.classList.add('hidden');
+                helpBtn.classList.add('hidden');
+                document.getElementById('nav-role-badge').innerText = 'Proxy-Care';
+                applyLanguage();
+            }
+
+            if(viewId === 'caretakers') renderCaretakersDirectory();
+            window.scrollTo(0,0);
+        }
+
+        // --- BACKEND FEATURES (Family & Helper) ---
+        function openBookingModal(serviceName) {
+            currentServiceBooking = serviceName;
+            document.getElementById('modal-title').innerText = `Book: ${serviceName}`;
+            const modal = document.getElementById('booking-modal');
+            const content = document.getElementById('booking-modal-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+        }
+
+        function closeBookingModal() {
+            const modal = document.getElementById('booking-modal');
+            const content = document.getElementById('booking-modal-content');
+            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function submitBooking() {
+            if(!currentUser) return;
+            const notes = document.getElementById('book-notes').value || "Routine service booked.";
+            const newTask = { id: Date.now(), service: currentServiceBooking, notes: notes, status: 'Pending Request' };
+            
+            currentUser.tasks.push(newTask);
+            
+            // Push to Global Log
+            const db = getDB();
+            db.sharedActivityLog.unshift({ time: getTime(), text: `Family Requested: ${currentServiceBooking}` });
+            saveDB(db);
+
+            saveUserSession();
+            closeBookingModal();
+            renderFamilyDashboard();
+            alert('Request created! Matching with nearby Care Proxies...');
+        }
+
+        function renderFamilyDashboard() {
+            // Render Tasks Feed
+            const feed = document.getElementById('family-tasks-feed');
+            if (currentUser.tasks.length === 0) {
+                feed.innerHTML = `<p class="text-xs text-gray-500 italic">No active requests.</p>`;
+            } else {
+                feed.innerHTML = currentUser.tasks.slice().reverse().map(t => `
+                    <div class="p-4 rounded-2xl bg-white dark:bg-[#111113] border border-gray-200/70 dark:border-white/10 flex items-center gap-3 shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-clipboard-check text-base"></i></div>
+                        <div class="flex-1 min-w-0"><h4 class="text-xs font-bold truncate">${t.service}</h4><p class="text-[10px] text-gray-400 truncate">${t.notes}</p></div>
+                        <span class="text-[9px] uppercase font-bold px-2 py-1 rounded bg-slate-100 dark:bg-white/5 text-gray-500 shrink-0">${t.status}</span>
+                    </div>
+                `).join('');
+            }
+
+            renderFamilyLogFromDB();
+
+            // Render My Care Team
+            const teamArea = document.getElementById('family-hired-team-section');
+            const teamList = document.getElementById('family-hired-team-list');
+            if (currentUser.hiredHelpers && currentUser.hiredHelpers.length > 0) {
+                teamArea.classList.remove('hidden');
+                teamList.innerHTML = currentUser.hiredHelpers.map(h => `
+                    <div class="p-3.5 rounded-xl border border-gray-200/80 dark:border-white/10 bg-slate-50 dark:bg-black/30 flex items-center gap-3 shadow-sm">
+                        <div class="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center shadow-md"><i class="fa-solid fa-user-nurse text-white"></i></div>
+                        <div>
+                            <h4 class="text-xs font-bold">${h.name}</h4>
+                            <p class="text-[10px] text-gray-500">${h.role}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderFamilyLogFromDB() {
+            const logArea = document.getElementById('family-activity-log');
+            if(!logArea) return;
+            const db = getDB();
+            const logs = db.sharedActivityLog || [];
+            
+            if (logs.length === 0) {
+                logArea.innerHTML = `<p class="text-xs text-gray-500">Awaiting status updates...</p>`;
+            } else {
+                logArea.innerHTML = logs.slice(0, 5).map((log, i) => `
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full ${i === 0 ? 'bg-cyan-500 animate-pulse' : 'bg-gray-400 dark:bg-gray-600'}"></div>
+                        <p class="text-[10px] font-bold ${i === 0 ? 'text-cyan-600 dark:text-cyan-400' : 'text-gray-500'}">${log.time}</p>
+                        <p class="text-xs ${i === 0 ? 'text-cyan-700 dark:text-cyan-300 font-bold' : 'text-gray-700 dark:text-gray-300 font-medium'}">${log.text}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function triggerElderAction(actionText) {
+            if(!currentUser) return;
+            const db = getDB();
+            db.sharedActivityLog.unshift({ time: getTime(), text: `Elder Activity: ${actionText}` });
+            saveDB(db);
+            alert(`Opening ${actionText.replace('Opened ', '')}...`);
+        }
+
+        function triggerElderSOS() {
+            if(!currentUser) return;
+            const db = getDB();
+            db.sharedActivityLog.unshift({ time: getTime(), text: `🚨 EMERGENCY SOS TRIGGERED` });
+            saveDB(db);
+            alert('Emergency Alert Triangulated and Sent to Family Dashboard & Medical Proxies!');
+        }
+
+        function renderCaretakersDirectory() {
+            const db = getDB();
+            const list = document.getElementById('caretaker-directory-list');
+            list.innerHTML = db.publicHelpers.map(h => {
+                const isHired = currentUser.hiredHelpers.find(x => x.id === h.id);
+                return `
+                <div class="rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#111113] p-5 shadow-sm flex flex-col">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center shadow-md">
+                                <i class="fa-solid fa-user-nurse text-xl text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-base">${h.name}</h3>
+                                <p class="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-wider">${h.role}</p>
+                            </div>
+                        </div>
+                        <span class="text-amber-500 text-xs font-bold bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg"><i class="fa-solid fa-star"></i> ${h.rating}</span>
+                    </div>
+                    ${isHired ? 
+                        `<button disabled class="w-full py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-500 text-xs font-bold cursor-not-allowed"><i class="fa-solid fa-check"></i> Added to Care Team</button>` :
+                        `<button onclick="hireHelper('${h.id}', '${h.name}', '${h.role}')" class="w-full py-3 rounded-xl bg-cyan-600 text-white text-xs font-bold hover:bg-cyan-700 active:scale-95 transition shadow-md">Hire Caretaker</button>`
+                    }
+                </div>
+                `;
+            }).join('');
+        }
+
+        function hireHelper(id, name, role) {
+            currentUser.hiredHelpers.push({ id, name, role });
+            const db = getDB();
+            db.sharedActivityLog.unshift({ time: getTime(), text: `Family Hired Caretaker: ${name}` });
+            saveDB(db);
+            saveUserSession();
+            renderCaretakersDirectory(); 
+            alert(`${name} added to your Care Team!`);
+        }
+
+        // Helper Flow
+        function renderHelperDashboard() {
+            const feed = document.getElementById('helper-requests-feed');
+            feed.innerHTML = `
+                <div class="p-5 rounded-2xl border border-gray-200/80 dark:border-white/10 bg-slate-50 dark:bg-black/30 flex flex-col gap-2 shadow-sm" id="req-1">
+                    <div class="flex justify-between">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white">Medicine Pickup</h4>
+                        <span class="text-xs font-black text-green-600 dark:text-green-400">₹150.00</span>
+                    </div>
+                    <p class="text-xs text-gray-500 font-medium"><i class="fa-solid fa-location-dot"></i> 2.4 km away (Apollo Pharmacy)</p>
+                    <button onclick="acceptTask('Medicine Pickup', 150, 'req-1')" class="w-full mt-2 py-3 rounded-xl bg-green-600 text-white text-xs font-bold hover:bg-green-700 shadow-md active:scale-95 transition">Accept Task</button>
+                </div>
+            `;
+        }
+
+        function acceptTask(taskName, amount, elementId) {
+            document.getElementById(elementId).style.display = 'none';
+            currentUser.tasks.push({ service: taskName, earnings: amount });
+            currentUser.earnings += amount;
+            saveUserSession();
+            
+            document.getElementById('helper-active-task-title').innerText = taskName;
+            document.getElementById('helper-active-task-earn').innerText = `Earn: ₹${amount}`;
+            
+            document.getElementById('helper-completed-tasks').innerText = `(${currentUser.tasks.length} tasks)`;
+            document.getElementById('helper-earnings').innerText = `₹${currentUser.earnings}`;
+            alert(`Task Accepted: ${taskName}`);
+        }
+
+        function markHelperArrived() {
+            if(!currentUser) return;
+            const db = getDB();
+            db.sharedActivityLog.unshift({ time: getTime(), text: `Caretaker ${currentUser.name || 'Ananya'} has arrived at the destination.` });
+            saveDB(db);
+            alert('Location marked as Arrived. Family has been notified.');
+        }
+
+        function markTaskComplete() {
+            if(!currentUser) return;
+            const db = getDB();
+            db.sharedActivityLog.unshift({ time: getTime(), text: `Caretaker ${currentUser.name || 'Ananya'} has successfully completed the task.` });
+            
+            // Mock adding a completed generic task
+            currentUser.tasks.push({ service: 'Completed Job', earnings: 450 });
+            currentUser.earnings += 450;
+            saveUserSession();
+            
+            document.getElementById('helper-active-task-title').innerText = "No Active Task";
+            document.getElementById('helper-active-task-earn').innerText = "Earn: ₹0";
+            document.getElementById('helper-completed-tasks').innerText = `(${currentUser.tasks.length} tasks)`;
+            document.getElementById('helper-earnings').innerText = `₹${currentUser.earnings}`;
+            alert('Task completed and logged to backend!');
+        }
+
+        // --- SETTINGS ---
+        function saveSettings() {
+            if(!currentUser) return;
+            currentUser.name = document.getElementById('set-name').value;
+            currentUser.language = document.getElementById('set-language').value;
+            saveUserSession();
+            applyLanguage();
+            alert('Settings Saved Successfully!');
+            routeUserToDashboard();
+        }
+
+        function changePassword() {
+            const oldP = document.getElementById('set-old-pass').value;
+            const newP = document.getElementById('set-new-pass').value;
+            if (oldP !== currentUser.pass) { alert("Incorrect current password!"); return; }
+            if (newP.length < 4) { alert("New password too short!"); return; }
+            currentUser.pass = newP;
+            saveUserSession();
+            document.getElementById('set-old-pass').value = '';
+            document.getElementById('set-new-pass').value = '';
+            alert("Password updated successfully!");
+        }
+
+        function linkElderAccount() {
+            const code = document.getElementById('set-elder-link-input').value;
+            if(code.length === 6) alert('Account linked to Family Dashboard successfully!');
+            else alert('Invalid Code');
+        }
+
+        function saveUserSession() {
+            const db = getDB();
+            db.users[currentUser.email] = currentUser;
+            saveDB(db);
+            localStorage.setItem('carebridgeSession', JSON.stringify(currentUser));
+        }
+    </script>
+</body>
+</html>

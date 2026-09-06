@@ -1,0 +1,6 @@
+{
+  "name": "Kin Care",
+  "description": "Senior citizen home healthcare and assistance platform offering verified nurses, bedside attendants, diagnostics, medicine delivery, and 24x7 emergency care.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

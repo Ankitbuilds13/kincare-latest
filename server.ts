@@ -3,12 +3,13 @@ import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import cors from 'cors';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
+app.use(cors({ origin: '*' }));
 app.use(express.json());
-
 // ==============================================================================
 // SUPABASE CLIENT INITIALIZATION & CONFIGURATION
 // ==============================================================================

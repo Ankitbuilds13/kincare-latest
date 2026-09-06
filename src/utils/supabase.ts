@@ -3,25 +3,18 @@ import { Medicine, Booking, VitalRecord, HelperChore, UserProfile, UserRole, Sen
 
 // Read Supabase environment variables safely
 const getEnvUrl = (): string => {
-  const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined;
-  if (metaEnv) {
-    return metaEnv.VITE_SUPABASE_URL || metaEnv.SUPABASE_URL || '';
-  }
-  return '';
+  return (
+    import.meta.env.VITE_SUPABASE_URL ||
+    'https://cppvbvhmedkhbizzyiqq.supabase.co'
+  );
 };
 
 const getEnvKey = (): string => {
-  const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined;
-  if (metaEnv) {
-    return (
-      metaEnv.VITE_SUPABASE_ANON_KEY ||
-      metaEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
-      metaEnv.SUPABASE_ANON_KEY ||
-      metaEnv.SUPABASE_KEY ||
-      ''
-    );
-  }
-  return '';
+  return (
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    'sb_publishable_2Ho2YebFSZfwPwxm16HzBw_zAl7BGSN'
+  );
 };
 
 let supabaseInstance: SupabaseClient | null = null;

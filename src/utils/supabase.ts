@@ -13,7 +13,7 @@ const getEnvKey = (): string => {
   return (
     import.meta.env.VITE_SUPABASE_ANON_KEY ||
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    'sb_publishable_2Ho2YebFSZfwPwxm16HzBw_zAl7BGSN'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwcHdidmhtZWRraGJpenp5aXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU2Mzc0NzAsImV4cCI6MjA0MTIxMzQ3MH0.zSZSI6ImFub24iLC'
   );
 };
 
@@ -43,19 +43,28 @@ export function getSupabase(): SupabaseClient | null {
 }
 
 export async function initSupabaseFromConfig(): Promise<SupabaseClient | null> {
-  if (supabaseInstance) return supabaseInstance;
-  if (isConfigFetched) return null;
-  isConfigFetched = true;
+  const client = getSupabase();
+  if (client) return client;
+  const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
+  const envKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
 
+  if (envUrl && envKey) {
+    supabaseInstance = createClient(envUrl, envKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+    return supabaseInstance;
+  }
+
+  // 2. Fallback to API route if env vars are missing
   try {
     const res = await fetch('/api/config/supabase');
     if (res.ok) {
       const { supabaseUrl, supabaseAnonKey } = await res.json();
       if (supabaseUrl && supabaseAnonKey) {
-        if (typeof window !== 'undefined') {
-          (window as any).__SUPABASE_URL__ = supabaseUrl;
-          (window as any).__SUPABASE_ANON_KEY__ = supabaseAnonKey;
-        }
         supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
           auth: {
             persistSession: true,
@@ -69,6 +78,7 @@ export async function initSupabaseFromConfig(): Promise<SupabaseClient | null> {
   } catch {
     // Graceful fallback
   }
+
   return getSupabase();
 }
 
